@@ -1,6 +1,6 @@
 package com.qa.main.cont;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -16,8 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DeerController {
 
-	//because no database
-	private List<Deer> herd = new ArrayList<>();
+
+	
+	private DeerService service;
+
+	public DeerController(DeerService service) {
+		super();
+		this.service = service;
+	}
+	
 	
 	@GetMapping("/hello")
 	public String greeting() {
@@ -26,24 +33,26 @@ public class DeerController {
 	
    //add a deer to the arraylist
 	@PostMapping("/create")
-	public Deer createDeer(@RequestBody Deer newDeer) {
-		this.herd.add(newDeer);
-		return this.herd.get(herd.size()-1);
+	public ResponseEntity<Deer> createDeer(@RequestBody Deer newDeer) {
+		Deer responsebody  = this.service.createDeer(newDeer);
+		
+		return new ResponseEntity<Deer>(responsebody, HttpStatus.CREATED);
 	}
 	
 	//replace a deer
 	@PutMapping("replace/{myIndex}")
 	public ResponseEntity<Deer> replaceDeer(@PathVariable Integer myIndex, @RequestBody Deer newDeer){
-		this.herd.set(myIndex, newDeer);
-		Deer inThereNow = this.herd.get(myIndex);
-		return new ResponseEntity<Deer>(inThereNow, HttpStatus.CREATED);
+		System.out.println("Replacing Deer with id " + myIndex + " with " + newDeer);
+		
+		Deer inThereNow = this.service.replaceDeer(myIndex, newDeer);
+		return new ResponseEntity<Deer>(inThereNow, HttpStatus.ACCEPTED);
 		
 	}
 	
 	//show a single deer
 	@GetMapping("/get/{myIndex}")
 	public Deer getMyDeer(@PathVariable Integer myIndex){
-		Deer myDeer = this.herd.get(myIndex);
+		Deer myDeer = this.service.getDeer(myIndex);
 		return myDeer;
 	}
 	
@@ -51,22 +60,28 @@ public class DeerController {
 	@GetMapping("/getThemAll")
 	public ResponseEntity<List<Deer>> getThemAll(){
 		
-		return ResponseEntity.ok(this.herd);
+		return ResponseEntity.ok(this.service.getDeer());
 	}
 	
 	//remove a deer from the herd
 	@DeleteMapping("/remove/{myIndex}")
-	public ResponseEntity<Deer> removeDeer(@PathVariable int myIndex){
-		Deer removedDeer = herd.remove(myIndex);
-		return new ResponseEntity<Deer>(removedDeer, HttpStatus.ACCEPTED);
+	public ResponseEntity<Deer> removeDeer(@PathVariable Integer myIndex){
+		System.out.println("Removing Deer with id " + myIndex);
+		
+		boolean worked = this.service.removeDeer(myIndex);
+		if (worked) {
+			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		} else {
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 	//clear the herd
-	@DeleteMapping("/emptyHerd")
-	public ResponseEntity<Deer> emptyHerd() {
-		this.herd.clear();
-		return ResponseEntity.ok(null);
-	}
+	//@DeleteMapping("/emptyHerd")
+	//public ResponseEntity<Deer> emptyHerd() {
+		//this.service.clear();
+		//return ResponseEntity.ok(null);
+	//}
 	
 	
 	
